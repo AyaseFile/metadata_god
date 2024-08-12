@@ -1,4 +1,4 @@
 library metadata_god;
 
-export 'src/metadata_god_base.dart' hide api;
-export 'src/bridge_generated.dart' show Metadata, Picture;
+export 'src/metadata_god_base.dart' show MetadataGod;
+export 'src/rust/api/metadata.dart' show Metadata, Picture;

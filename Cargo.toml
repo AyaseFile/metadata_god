@@ -1,2 +1,2 @@
 [workspace]
-members = ["packages/metadata_god/native"]
+members = ["packages/metadata_god/rust"]
