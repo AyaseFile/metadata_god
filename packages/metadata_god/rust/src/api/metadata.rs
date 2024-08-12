@@ -67,56 +67,77 @@ pub fn read_metadata(file: String) -> Result<Metadata> {
 pub fn write_metadata(file: String, metadata: Metadata) -> Result<()> {
     let (_tagged_file, mut tag) = open_or_create_tag_for_file(&file)?;
 
-    if metadata.title.is_some() {
-        tag.set_title(metadata.title.unwrap());
+    if let Some(title) = metadata.title {
+        tag.set_title(title);
+    } else {
+        tag.remove_title();
     }
-    if metadata.album.is_some() {
-        tag.set_album(metadata.album.unwrap());
+    if let Some(album) = metadata.album {
+        tag.set_album(album);
+    } else {
+        tag.remove_album();
     }
-    if metadata.album_artist.is_some() {
+    if let Some(album_artist) = metadata.album_artist {
         tag.insert(TagItem::new(
             ItemKey::AlbumArtist,
-            ItemValue::Text(metadata.album_artist.unwrap()),
+            ItemValue::Text(album_artist),
         ));
+    } else {
+        tag.remove_key(&ItemKey::AlbumArtist);
     }
-    if metadata.artist.is_some() {
-        tag.set_artist(metadata.artist.unwrap());
+    if let Some(artist) = metadata.artist {
+        tag.set_artist(artist);
+    } else {
+        tag.remove_artist();
     }
-    if metadata.track_number.is_some() {
-        tag.set_track(metadata.track_number.unwrap() as u32);
+    if let Some(track_number) = metadata.track_number {
+        tag.set_track(track_number as u32);
+    } else {
+        tag.remove_track();
     }
-    if metadata.track_total.is_some() {
-        tag.set_track_total(metadata.track_total.unwrap() as u32);
+    if let Some(track_total) = metadata.track_total {
+        tag.set_track_total(track_total as u32);
+    } else {
+        tag.remove_track_total();
     }
-    if metadata.disc_number.is_some() {
-        tag.set_disk(metadata.disc_number.unwrap() as u32);
+    if let Some(disc_number) = metadata.disc_number {
+        tag.set_disk(disc_number as u32);
+    } else {
+        tag.remove_disk();
     }
-    if metadata.disc_total.is_some() {
-        tag.set_disk_total(metadata.disc_total.unwrap() as u32);
+    if let Some(disc_total) = metadata.disc_total {
+        tag.set_disk_total(disc_total as u32);
+    } else {
+        tag.remove_disk_total();
     }
-    if metadata.year.is_some() {
-        tag.set_year(metadata.year.unwrap() as u32);
+    if let Some(year) = metadata.year {
+        tag.set_year(year as u32);
+    } else {
+        tag.remove_year();
     }
-    if metadata.genre.is_some() {
-        tag.set_genre(metadata.genre.unwrap());
+    if let Some(genre) = metadata.genre {
+        tag.set_genre(genre);
+    } else {
+        tag.remove_genre();
     }
-    if metadata.picture.is_some() {
-        let image = metadata.picture.as_ref().unwrap();
+    if let Some(picture) = metadata.picture {
         let cover_front_index = tag
             .pictures()
             .iter()
             .position(|p| p.pic_type() == PictureType::CoverFront);
         let new_picture = lofty::picture::Picture::new_unchecked(
             PictureType::CoverFront,
-            Some(MimeType::from_str(&image.mime_type)),
+            Some(MimeType::from_str(&picture.mime_type)),
             None,
-            image.data.clone(),
+            picture.data.clone(),
         );
         if let Some(index) = cover_front_index {
             tag.set_picture(index, new_picture);
         } else {
             tag.push_picture(new_picture);
         }
+    } else {
+        tag.remove_picture_type(PictureType::CoverFront);
     }
 
     tag.save_to_path(&file, WriteOptions::default())?;
