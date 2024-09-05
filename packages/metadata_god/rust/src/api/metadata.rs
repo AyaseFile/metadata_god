@@ -67,23 +67,30 @@ pub fn read_metadata(file: String) -> Result<Metadata> {
 pub fn write_metadata(file: String, metadata: Metadata) -> Result<()> {
     let (_tagged_file, mut tag) = open_or_create_tag_for_file(&file)?;
 
-    fn set_or_remove(tag: &mut Tag, key: ItemKey, value: Option<String>) {
+    fn set_or_remove(tag: &mut Tag, key: ItemKey, value: Option<String>) -> Result<()> {
         match value {
-            Some(v) => { tag.insert_text(key, v); }
-            None => { tag.remove_key(&key); }
+            Some(v) => {
+                if !tag.insert_text(key.clone(), v) {
+                    return Err(anyhow!("Failed to insert text for key: {:?}", key));
+                }
+            }
+            None => {
+                tag.remove_key(&key);
+            }
         }
+        Ok(())
     }
 
-    set_or_remove(&mut tag, ItemKey::TrackTitle, metadata.title);
-    set_or_remove(&mut tag, ItemKey::AlbumTitle, metadata.album);
-    set_or_remove(&mut tag, ItemKey::AlbumArtist, metadata.album_artist);
-    set_or_remove(&mut tag, ItemKey::TrackArtist, metadata.artist);
-    set_or_remove(&mut tag, ItemKey::TrackNumber, metadata.track_number.map(|n| n.to_string()));
-    set_or_remove(&mut tag, ItemKey::TrackTotal, metadata.track_total.map(|n| n.to_string()));
-    set_or_remove(&mut tag, ItemKey::DiscNumber, metadata.disc_number.map(|n| n.to_string()));
-    set_or_remove(&mut tag, ItemKey::DiscTotal, metadata.disc_total.map(|n| n.to_string()));
-    set_or_remove(&mut tag, ItemKey::Year, metadata.year.map(|y| y.to_string()));
-    set_or_remove(&mut tag, ItemKey::Genre, metadata.genre);
+    set_or_remove(&mut tag, ItemKey::TrackTitle, metadata.title)?;
+    set_or_remove(&mut tag, ItemKey::AlbumTitle, metadata.album)?;
+    set_or_remove(&mut tag, ItemKey::AlbumArtist, metadata.album_artist)?;
+    set_or_remove(&mut tag, ItemKey::TrackArtist, metadata.artist)?;
+    set_or_remove(&mut tag, ItemKey::TrackNumber, metadata.track_number.map(|n| n.to_string()))?;
+    set_or_remove(&mut tag, ItemKey::TrackTotal, metadata.track_total.map(|n| n.to_string()))?;
+    set_or_remove(&mut tag, ItemKey::DiscNumber, metadata.disc_number.map(|n| n.to_string()))?;
+    set_or_remove(&mut tag, ItemKey::DiscTotal, metadata.disc_total.map(|n| n.to_string()))?;
+    set_or_remove(&mut tag, ItemKey::Year, metadata.year.map(|y| y.to_string()))?;
+    set_or_remove(&mut tag, ItemKey::Genre, metadata.genre)?;
 
     if let Some(picture) = metadata.picture {
         let cover_front_index = tag
