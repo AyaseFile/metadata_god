@@ -4,7 +4,7 @@ use lofty::file::TaggedFile;
 use lofty::picture::{MimeType, PictureType};
 use lofty::prelude::{Accessor, AudioFile, ItemKey, TagExt, TaggedFileExt};
 use lofty::properties::FileProperties;
-use lofty::tag::{ItemValue, Tag, TagItem};
+use lofty::tag::{ItemValue, Tag};
 
 #[derive(Debug)]
 pub struct Picture {
@@ -67,59 +67,24 @@ pub fn read_metadata(file: String) -> Result<Metadata> {
 pub fn write_metadata(file: String, metadata: Metadata) -> Result<()> {
     let (_tagged_file, mut tag) = open_or_create_tag_for_file(&file)?;
 
-    if let Some(title) = metadata.title {
-        tag.set_title(title);
-    } else {
-        tag.remove_title();
+    fn set_or_remove(tag: &mut Tag, key: ItemKey, value: Option<String>) {
+        match value {
+            Some(v) => { tag.insert_text(key, v); }
+            None => { tag.remove_key(&key); }
+        }
     }
-    if let Some(album) = metadata.album {
-        tag.set_album(album);
-    } else {
-        tag.remove_album();
-    }
-    if let Some(album_artist) = metadata.album_artist {
-        tag.insert(TagItem::new(
-            ItemKey::AlbumArtist,
-            ItemValue::Text(album_artist),
-        ));
-    } else {
-        tag.remove_key(&ItemKey::AlbumArtist);
-    }
-    if let Some(artist) = metadata.artist {
-        tag.set_artist(artist);
-    } else {
-        tag.remove_artist();
-    }
-    if let Some(track_number) = metadata.track_number {
-        tag.set_track(track_number as u32);
-    } else {
-        tag.remove_track();
-    }
-    if let Some(track_total) = metadata.track_total {
-        tag.set_track_total(track_total as u32);
-    } else {
-        tag.remove_track_total();
-    }
-    if let Some(disc_number) = metadata.disc_number {
-        tag.set_disk(disc_number as u32);
-    } else {
-        tag.remove_disk();
-    }
-    if let Some(disc_total) = metadata.disc_total {
-        tag.set_disk_total(disc_total as u32);
-    } else {
-        tag.remove_disk_total();
-    }
-    if let Some(year) = metadata.year {
-        tag.set_year(year as u32);
-    } else {
-        tag.remove_year();
-    }
-    if let Some(genre) = metadata.genre {
-        tag.set_genre(genre);
-    } else {
-        tag.remove_genre();
-    }
+
+    set_or_remove(&mut tag, ItemKey::TrackTitle, metadata.title);
+    set_or_remove(&mut tag, ItemKey::AlbumTitle, metadata.album);
+    set_or_remove(&mut tag, ItemKey::AlbumArtist, metadata.album_artist);
+    set_or_remove(&mut tag, ItemKey::TrackArtist, metadata.artist);
+    set_or_remove(&mut tag, ItemKey::TrackNumber, metadata.track_number.map(|n| n.to_string()));
+    set_or_remove(&mut tag, ItemKey::TrackTotal, metadata.track_total.map(|n| n.to_string()));
+    set_or_remove(&mut tag, ItemKey::DiscNumber, metadata.disc_number.map(|n| n.to_string()));
+    set_or_remove(&mut tag, ItemKey::DiscTotal, metadata.disc_total.map(|n| n.to_string()));
+    set_or_remove(&mut tag, ItemKey::Year, metadata.year.map(|y| y.to_string()));
+    set_or_remove(&mut tag, ItemKey::Genre, metadata.genre);
+
     if let Some(picture) = metadata.picture {
         let cover_front_index = tag
             .pictures()
@@ -158,43 +123,30 @@ fn open_or_create_tag_for_file(file: &str) -> Result<(TaggedFile, Tag)> {
         }
     };
 
-    let tag = match tagged_file.primary_tag_mut() {
-        Some(primary_tag) => primary_tag,
-        None => {
-            if let Some(first_tag) = tagged_file.first_tag_mut() {
-                first_tag
-            } else {
-                let tag_type = tagged_file.primary_tag_type();
-
-                eprintln!("WARN: No tags found, creating a new tag of type `{tag_type:?}`");
-                tagged_file.insert_tag(Tag::new(tag_type));
-
-                tagged_file.primary_tag_mut().unwrap()
-            }
-        }
-    }
-    .to_owned();
+    let tag = get_or_create_tag(&mut tagged_file);
     Ok((tagged_file, tag))
 }
 
 fn get_tag_for_file(file: &str) -> Result<(TaggedFile, Tag)> {
     let mut tagged_file = lofty::read_from_path(file)?;
+    let tag = get_or_create_tag(&mut tagged_file);
+    Ok((tagged_file, tag))
+}
 
-    let tag = match tagged_file.primary_tag_mut() {
-        Some(primary_tag) => primary_tag,
+fn get_or_create_tag(tagged_file: &mut TaggedFile) -> Tag {
+    match tagged_file.primary_tag_mut() {
+        Some(primary_tag) => primary_tag.to_owned(),
         None => {
             if let Some(first_tag) = tagged_file.first_tag_mut() {
-                first_tag
+                first_tag.to_owned()
             } else {
                 let tag_type = tagged_file.primary_tag_type();
 
                 eprintln!("WARN: No tags found, creating a new tag of type `{tag_type:?}`");
                 tagged_file.insert_tag(Tag::new(tag_type));
 
-                tagged_file.primary_tag_mut().unwrap()
+                tagged_file.primary_tag_mut().unwrap().to_owned()
             }
         }
     }
-    .to_owned();
-    Ok((tagged_file, tag))
 }
