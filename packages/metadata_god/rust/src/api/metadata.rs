@@ -1,10 +1,12 @@
+use std::path::Path;
 use anyhow::{anyhow, Result};
+use id3::{Tag as Id3Tag, TagLike};
 use lofty::config::WriteOptions;
 use lofty::file::TaggedFile;
 use lofty::picture::{MimeType, PictureType};
 use lofty::prelude::{Accessor, AudioFile, ItemKey, TagExt, TaggedFileExt};
 use lofty::properties::FileProperties;
-use lofty::tag::{ItemValue, Tag};
+use lofty::tag::{ItemValue, Tag as LoftyTag};
 
 #[derive(Debug)]
 pub struct Picture {
@@ -12,6 +14,13 @@ pub struct Picture {
     pub mime_type: String,
     /// The image data.
     pub data: Vec<u8>,
+}
+
+#[derive(Debug)]
+pub enum TagType {
+    Id3,
+    Riff,
+    Unknown,
 }
 
 #[derive(Debug)]
@@ -31,14 +40,25 @@ pub struct Metadata {
     pub file_size: Option<u64>,
 }
 
-pub fn read_metadata(file: String) -> Result<Metadata> {
-    let (tagged_file, tag) = get_tag_for_file(&file)?;
+pub fn lofty_read_metadata(file: String) -> Result<Metadata> {
+    let mut tagged_file = lofty::read_from_path(file)?;
+    let duration_ms = tagged_file.properties().duration().as_millis() as f64;
+    let tag = match tagged_file.primary_tag_mut() {
+        Some(primary_tag) => primary_tag,
+        None => {
+            if let Some(first_tag) = tagged_file.first_tag_mut() {
+                first_tag
+            } else {
+                return Err(anyhow!("No tags found"));
+            }
+        }
+    };
     let cover = tag
         .get_picture_type(PictureType::CoverFront)
         .or(tag.pictures().first());
     Ok(Metadata {
         title: tag.title().and_then(|s| Some(s.to_string())),
-        duration_ms: Some(tagged_file.properties().duration().as_millis() as f64),
+        duration_ms: Some(duration_ms),
         album: tag.album().and_then(|s| Some(s.to_string())),
         album_artist: tag
             .get(&ItemKey::AlbumArtist)
@@ -64,10 +84,10 @@ pub fn read_metadata(file: String) -> Result<Metadata> {
     })
 }
 
-pub fn write_metadata(file: String, metadata: Metadata) -> Result<()> {
-    let (_tagged_file, mut tag) = open_or_create_tag_for_file(&file)?;
+pub fn lofty_write_metadata(file: String, metadata: Metadata, create_tag_if_missing: bool) -> Result<()> {
+    let mut tag = get_or_create_tag_for_file(&file, create_tag_if_missing)?;
 
-    fn set_or_remove(tag: &mut Tag, key: ItemKey, value: Option<String>) -> Result<()> {
+    fn set_or_remove(tag: &mut LoftyTag, key: ItemKey, value: Option<String>) -> Result<()> {
         match value {
             Some(v) => {
                 if !tag.insert_text(key.clone(), v) {
@@ -116,44 +136,140 @@ pub fn write_metadata(file: String, metadata: Metadata) -> Result<()> {
     Ok(())
 }
 
-fn open_or_create_tag_for_file(file: &str) -> Result<(TaggedFile, Tag)> {
+fn get_or_create_tag_for_file(file: &str, create_if_missing: bool) -> Result<LoftyTag> {
     let mut tagged_file = match lofty::read_from_path(file) {
         Ok(tagged_file) => tagged_file,
         _ => {
             let prob = lofty::probe::Probe::open(file)?;
-
             if prob.file_type().is_none() {
                 return Err(anyhow!("File type could not be determined"));
             }
-
             TaggedFile::new(prob.file_type().unwrap(), FileProperties::default(), vec![])
         }
     };
 
-    let tag = get_or_create_tag(&mut tagged_file);
-    Ok((tagged_file, tag))
-}
-
-fn get_tag_for_file(file: &str) -> Result<(TaggedFile, Tag)> {
-    let mut tagged_file = lofty::read_from_path(file)?;
-    let tag = get_or_create_tag(&mut tagged_file);
-    Ok((tagged_file, tag))
-}
-
-fn get_or_create_tag(tagged_file: &mut TaggedFile) -> Tag {
     match tagged_file.primary_tag_mut() {
-        Some(primary_tag) => primary_tag.to_owned(),
+        Some(primary_tag) => Ok(primary_tag.to_owned()),
         None => {
             if let Some(first_tag) = tagged_file.first_tag_mut() {
-                first_tag.to_owned()
+                Ok(first_tag.to_owned())
             } else {
+                if !create_if_missing {
+                    return Err(anyhow!("No tags found"));
+                }
                 let tag_type = tagged_file.primary_tag_type();
-
                 eprintln!("WARN: No tags found, creating a new tag of type `{tag_type:?}`");
-                tagged_file.insert_tag(Tag::new(tag_type));
-
-                tagged_file.primary_tag_mut().unwrap().to_owned()
+                tagged_file.insert_tag(LoftyTag::new(tag_type));
+                Ok(tagged_file.primary_tag_mut().unwrap().to_owned())
             }
         }
     }
+}
+
+pub fn id3_read_metadata(file: String) -> Result<Metadata> {
+    let path = Path::new(&file);
+    let tag = Id3Tag::read_from_path(path)?;
+    let metadata = Metadata {
+        title: tag.title().and_then(|s| Some(s.to_string())),
+        duration_ms: tag.duration().map(|d| d as f64),
+        album: tag.album().and_then(|s| Some(s.to_string())),
+        album_artist: tag.album_artist().and_then(|s| Some(s.to_string())),
+        artist: tag.artist().and_then(|s| Some(s.to_string())),
+        track_number: tag.track().map(|f| f as u16),
+        track_total: tag.total_tracks().map(|f| f as u16),
+        disc_number: tag.disc().map(|f| f as u16),
+        disc_total: tag.total_discs().map(|f| f as u16),
+        year: tag.year().map(|f| f),
+        genre: tag.genre().and_then(|s| Some(s.to_string())),
+        picture: tag
+            .pictures()
+            .find(|p| p.picture_type == id3::frame::PictureType::CoverFront)
+            .map(|p| Picture {
+                mime_type: p.mime_type.clone(),
+                data: p.data.clone(),
+            }),
+        file_size: Some(21231_u64),
+    };
+    Ok(metadata)
+}
+
+pub fn id3_write_metadata(file: String, metadata: Metadata) -> Result<()> {
+    let path = Path::new(&file);
+    let mut tag = Id3Tag::read_from_path(path)?;
+
+    if let Some(title) = metadata.title {
+        tag.set_title(title);
+    } else {
+        tag.remove_title();
+    }
+
+    if let Some(album) = metadata.album {
+        tag.set_album(album);
+    } else {
+        tag.remove_album();
+    }
+
+    if let Some(album_artist) = metadata.album_artist {
+        tag.set_album_artist(album_artist);
+    } else {
+        tag.remove_album_artist();
+    }
+
+    if let Some(artist) = metadata.artist {
+        tag.set_artist(artist);
+    } else {
+        tag.remove_artist();
+    }
+
+    if let Some(track_number) = metadata.track_number {
+        tag.set_track(track_number as u32);
+    } else {
+        tag.remove_track();
+    }
+
+    if let Some(track_total) = metadata.track_total {
+        tag.set_total_tracks(track_total as u32);
+    } else {
+        tag.remove_total_tracks();
+    }
+
+    if let Some(disc_number) = metadata.disc_number {
+        tag.set_disc(disc_number as u32);
+    } else {
+        tag.remove_disc();
+    }
+
+    if let Some(disc_total) = metadata.disc_total {
+        tag.set_total_discs(disc_total as u32);
+    } else {
+        tag.remove_total_discs();
+    }
+
+    if let Some(year) = metadata.year {
+        tag.set_year(year);
+    } else {
+        tag.remove_year();
+    }
+
+    if let Some(genre) = metadata.genre {
+        tag.set_genre(genre);
+    } else {
+        tag.remove_genre();
+    }
+
+    if let Some(picture) = metadata.picture {
+        let picture_type = id3::frame::PictureType::CoverFront;
+        let picture = id3::frame::Picture {
+            mime_type: picture.mime_type.parse()?,
+            picture_type,
+            description: String::new(),
+            data: picture.data,
+        };
+        tag.add_frame(picture);
+    } else {
+        tag.remove_picture_by_type(id3::frame::PictureType::CoverFront);
+    }
+
+    tag.write_to_path(path, id3::Version::Id3v24)?;
+    Ok(())
 }

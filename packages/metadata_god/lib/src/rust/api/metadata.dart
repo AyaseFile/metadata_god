@@ -6,16 +6,27 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `get_or_create_tag`, `get_tag_for_file`, `open_or_create_tag_for_file`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `get_or_create_tag_for_file`
+// These types are ignored because they are not used by any `pub` functions: `TagType`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`, `fmt`
 
-Future<Metadata> readMetadata({required String file}) =>
-    RustLib.instance.api.crateApiMetadataReadMetadata(file: file);
+Future<Metadata> loftyReadMetadata({required String file}) =>
+    RustLib.instance.api.crateApiMetadataLoftyReadMetadata(file: file);
 
-Future<void> writeMetadata(
+Future<void> loftyWriteMetadata(
+        {required String file,
+        required Metadata metadata,
+        required bool createTagIfMissing}) =>
+    RustLib.instance.api.crateApiMetadataLoftyWriteMetadata(
+        file: file, metadata: metadata, createTagIfMissing: createTagIfMissing);
+
+Future<Metadata> id3ReadMetadata({required String file}) =>
+    RustLib.instance.api.crateApiMetadataId3ReadMetadata(file: file);
+
+Future<void> id3WriteMetadata(
         {required String file, required Metadata metadata}) =>
     RustLib.instance.api
-        .crateApiMetadataWriteMetadata(file: file, metadata: metadata);
+        .crateApiMetadataId3WriteMetadata(file: file, metadata: metadata);
 
 class Metadata {
   final String? title;

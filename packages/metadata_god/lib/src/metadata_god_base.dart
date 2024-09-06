@@ -25,8 +25,10 @@ abstract class MetadataGod {
   /// Read metadata from a mp3, m4a, ogg & flac file
   ///
   /// The path to file must exists otherwise will throw [Exception]
-  static Future<api_metadata.Metadata> readMetadata({required String file}) {
-    return api_metadata.readMetadata(file: file);
+  static Future<api_metadata.Metadata> loftyReadMetadata({
+    required String file,
+  }) {
+    return api_metadata.loftyReadMetadata(file: file);
   }
 
   /// Write metadata to a mp3, m4a, ogg & flac file
@@ -35,7 +37,7 @@ abstract class MetadataGod {
   ///
   /// Example:
   /// ```dart
-  /// await MetadataGod.writeMetadata(
+  /// await MetadataGod.loftyWriteMetadata(
   ///   "/path/to/audio-file",
   ///   Metadata(
   ///     title: "Leave the Door Open",
@@ -55,13 +57,29 @@ abstract class MetadataGod {
   ///       mimeType: lookupMimeType("/path/to/cover-image"),
   ///     ),
   ///   ),
+  ///   createTagIfMissing: true,
   /// );
   /// ```
-  static Future<void> writeMetadata({
+  static Future<void> loftyWriteMetadata({
+    required String file,
+    required api_metadata.Metadata metadata,
+    bool createTagIfMissing = true,
+  }) {
+    return api_metadata.loftyWriteMetadata(
+        file: file, metadata: metadata, createTagIfMissing: createTagIfMissing);
+  }
+
+  static Future<api_metadata.Metadata> id3ReadMetadata({
+    required String file,
+  }) {
+    return api_metadata.id3ReadMetadata(file: file);
+  }
+
+  static Future<void> id3WriteMetadata({
     required String file,
     required api_metadata.Metadata metadata,
   }) {
-    return api_metadata.writeMetadata(file: file, metadata: metadata);
+    return api_metadata.id3WriteMetadata(file: file, metadata: metadata);
   }
 }
 

@@ -66,7 +66,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.3.0';
 
   @override
-  int get rustContentHash => -1292942994;
+  int get rustContentHash => -670207070;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -77,10 +77,17 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<Metadata> crateApiMetadataReadMetadata({required String file});
+  Future<Metadata> crateApiMetadataId3ReadMetadata({required String file});
 
-  Future<void> crateApiMetadataWriteMetadata(
+  Future<void> crateApiMetadataId3WriteMetadata(
       {required String file, required Metadata metadata});
+
+  Future<Metadata> crateApiMetadataLoftyReadMetadata({required String file});
+
+  Future<void> crateApiMetadataLoftyWriteMetadata(
+      {required String file,
+      required Metadata metadata,
+      required bool createTagIfMissing});
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -92,7 +99,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<Metadata> crateApiMetadataReadMetadata({required String file}) {
+  Future<Metadata> crateApiMetadataId3ReadMetadata({required String file}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
@@ -104,20 +111,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeSuccessData: sse_decode_metadata,
         decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kCrateApiMetadataReadMetadataConstMeta,
+      constMeta: kCrateApiMetadataId3ReadMetadataConstMeta,
       argValues: [file],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiMetadataReadMetadataConstMeta =>
+  TaskConstMeta get kCrateApiMetadataId3ReadMetadataConstMeta =>
       const TaskConstMeta(
-        debugName: "read_metadata",
+        debugName: "id3_read_metadata",
         argNames: ["file"],
       );
 
   @override
-  Future<void> crateApiMetadataWriteMetadata(
+  Future<void> crateApiMetadataId3WriteMetadata(
       {required String file, required Metadata metadata}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -131,16 +138,71 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kCrateApiMetadataWriteMetadataConstMeta,
+      constMeta: kCrateApiMetadataId3WriteMetadataConstMeta,
       argValues: [file, metadata],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiMetadataWriteMetadataConstMeta =>
+  TaskConstMeta get kCrateApiMetadataId3WriteMetadataConstMeta =>
       const TaskConstMeta(
-        debugName: "write_metadata",
+        debugName: "id3_write_metadata",
         argNames: ["file", "metadata"],
+      );
+
+  @override
+  Future<Metadata> crateApiMetadataLoftyReadMetadata({required String file}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(file, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 3, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_metadata,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kCrateApiMetadataLoftyReadMetadataConstMeta,
+      argValues: [file],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiMetadataLoftyReadMetadataConstMeta =>
+      const TaskConstMeta(
+        debugName: "lofty_read_metadata",
+        argNames: ["file"],
+      );
+
+  @override
+  Future<void> crateApiMetadataLoftyWriteMetadata(
+      {required String file,
+      required Metadata metadata,
+      required bool createTagIfMissing}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(file, serializer);
+        sse_encode_box_autoadd_metadata(metadata, serializer);
+        sse_encode_bool(createTagIfMissing, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 4, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kCrateApiMetadataLoftyWriteMetadataConstMeta,
+      argValues: [file, metadata, createTagIfMissing],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiMetadataLoftyWriteMetadataConstMeta =>
+      const TaskConstMeta(
+        debugName: "lofty_write_metadata",
+        argNames: ["file", "metadata", "createTagIfMissing"],
       );
 
   @protected
@@ -153,6 +215,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as String;
+  }
+
+  @protected
+  bool dco_decode_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
   }
 
   @protected
@@ -316,6 +384,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
     return utf8.decoder.convert(inner);
+  }
+
+  @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
   }
 
   @protected
@@ -503,12 +577,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
-  }
-
-  @protected
   void sse_encode_AnyhowException(
       AnyhowException self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -519,6 +587,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
+  }
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self ? 1 : 0);
   }
 
   @protected
@@ -685,11 +759,5 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_unit(void self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-  }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
   }
 }
