@@ -248,6 +248,7 @@ impl SseDecode for Vec<u8> {
 impl SseDecode for crate::api::metadata::Metadata {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_tagType = <crate::api::metadata::TagType>::sse_decode(deserializer);
         let mut var_title = <Option<String>>::sse_decode(deserializer);
         let mut var_durationMs = <Option<f64>>::sse_decode(deserializer);
         let mut var_artist = <Option<String>>::sse_decode(deserializer);
@@ -262,6 +263,7 @@ impl SseDecode for crate::api::metadata::Metadata {
         let mut var_picture = <Option<crate::api::metadata::Picture>>::sse_decode(deserializer);
         let mut var_fileSize = <Option<u64>>::sse_decode(deserializer);
         return crate::api::metadata::Metadata {
+            tag_type: var_tagType,
             title: var_title,
             duration_ms: var_durationMs,
             artist: var_artist,
@@ -357,6 +359,21 @@ impl SseDecode for crate::api::metadata::Picture {
     }
 }
 
+impl SseDecode for crate::api::metadata::TagType {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::metadata::TagType::Ape,
+            1 => crate::api::metadata::TagType::Id3,
+            2 => crate::api::metadata::TagType::Vorbis,
+            3 => crate::api::metadata::TagType::Riff,
+            4 => crate::api::metadata::TagType::Unknown,
+            _ => unreachable!("Invalid variant for TagType: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for u16 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -422,6 +439,7 @@ fn pde_ffi_dispatcher_sync_impl(
 impl flutter_rust_bridge::IntoDart for crate::api::metadata::Metadata {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
+            self.tag_type.into_into_dart().into_dart(),
             self.title.into_into_dart().into_dart(),
             self.duration_ms.into_into_dart().into_dart(),
             self.artist.into_into_dart().into_dart(),
@@ -465,6 +483,27 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::metadata::Picture>
     for crate::api::metadata::Picture
 {
     fn into_into_dart(self) -> crate::api::metadata::Picture {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::metadata::TagType {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Ape => 0.into_dart(),
+            Self::Id3 => 1.into_dart(),
+            Self::Vorbis => 2.into_dart(),
+            Self::Riff => 3.into_dart(),
+            Self::Unknown => 4.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::metadata::TagType {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::metadata::TagType>
+    for crate::api::metadata::TagType
+{
+    fn into_into_dart(self) -> crate::api::metadata::TagType {
         self
     }
 }
@@ -517,6 +556,7 @@ impl SseEncode for Vec<u8> {
 impl SseEncode for crate::api::metadata::Metadata {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::metadata::TagType>::sse_encode(self.tag_type, serializer);
         <Option<String>>::sse_encode(self.title, serializer);
         <Option<f64>>::sse_encode(self.duration_ms, serializer);
         <Option<String>>::sse_encode(self.artist, serializer);
@@ -598,6 +638,25 @@ impl SseEncode for crate::api::metadata::Picture {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.mime_type, serializer);
         <Vec<u8>>::sse_encode(self.data, serializer);
+    }
+}
+
+impl SseEncode for crate::api::metadata::TagType {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::metadata::TagType::Ape => 0,
+                crate::api::metadata::TagType::Id3 => 1,
+                crate::api::metadata::TagType::Vorbis => 2,
+                crate::api::metadata::TagType::Riff => 3,
+                crate::api::metadata::TagType::Unknown => 4,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

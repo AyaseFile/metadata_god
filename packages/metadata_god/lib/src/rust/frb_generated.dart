@@ -84,7 +84,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<Metadata> crateApiMetadataLoftyReadMetadata({required String file});
 
-  Future<void> crateApiMetadataLoftyWriteMetadata(
+  Future<TagType> crateApiMetadataLoftyWriteMetadata(
       {required String file,
       required Metadata metadata,
       required bool createTagIfMissing});
@@ -176,7 +176,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiMetadataLoftyWriteMetadata(
+  Future<TagType> crateApiMetadataLoftyWriteMetadata(
       {required String file,
       required Metadata metadata,
       required bool createTagIfMissing}) {
@@ -190,7 +190,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             funcId: 4, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
+        decodeSuccessData: sse_decode_tag_type,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiMetadataLoftyWriteMetadataConstMeta,
@@ -281,22 +281,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Metadata dco_decode_metadata(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 13)
-      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    if (arr.length != 14)
+      throw Exception('unexpected arr length: expect 14 but see ${arr.length}');
     return Metadata(
-      title: dco_decode_opt_String(arr[0]),
-      durationMs: dco_decode_opt_box_autoadd_f_64(arr[1]),
-      artist: dco_decode_opt_String(arr[2]),
-      album: dco_decode_opt_String(arr[3]),
-      albumArtist: dco_decode_opt_String(arr[4]),
-      trackNumber: dco_decode_opt_box_autoadd_u_16(arr[5]),
-      trackTotal: dco_decode_opt_box_autoadd_u_16(arr[6]),
-      discNumber: dco_decode_opt_box_autoadd_u_16(arr[7]),
-      discTotal: dco_decode_opt_box_autoadd_u_16(arr[8]),
-      year: dco_decode_opt_box_autoadd_i_32(arr[9]),
-      genre: dco_decode_opt_String(arr[10]),
-      picture: dco_decode_opt_box_autoadd_picture(arr[11]),
-      fileSize: dco_decode_opt_box_autoadd_u_64(arr[12]),
+      tagType: dco_decode_tag_type(arr[0]),
+      title: dco_decode_opt_String(arr[1]),
+      durationMs: dco_decode_opt_box_autoadd_f_64(arr[2]),
+      artist: dco_decode_opt_String(arr[3]),
+      album: dco_decode_opt_String(arr[4]),
+      albumArtist: dco_decode_opt_String(arr[5]),
+      trackNumber: dco_decode_opt_box_autoadd_u_16(arr[6]),
+      trackTotal: dco_decode_opt_box_autoadd_u_16(arr[7]),
+      discNumber: dco_decode_opt_box_autoadd_u_16(arr[8]),
+      discTotal: dco_decode_opt_box_autoadd_u_16(arr[9]),
+      year: dco_decode_opt_box_autoadd_i_32(arr[10]),
+      genre: dco_decode_opt_String(arr[11]),
+      picture: dco_decode_opt_box_autoadd_picture(arr[12]),
+      fileSize: dco_decode_opt_box_autoadd_u_64(arr[13]),
     );
   }
 
@@ -346,6 +347,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       mimeType: dco_decode_String(arr[0]),
       data: dco_decode_list_prim_u_8_strict(arr[1]),
     );
+  }
+
+  @protected
+  TagType dco_decode_tag_type(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TagType.values[raw as int];
   }
 
   @protected
@@ -450,6 +457,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Metadata sse_decode_metadata(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_tagType = sse_decode_tag_type(deserializer);
     var var_title = sse_decode_opt_String(deserializer);
     var var_durationMs = sse_decode_opt_box_autoadd_f_64(deserializer);
     var var_artist = sse_decode_opt_String(deserializer);
@@ -464,6 +472,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_picture = sse_decode_opt_box_autoadd_picture(deserializer);
     var var_fileSize = sse_decode_opt_box_autoadd_u_64(deserializer);
     return Metadata(
+        tagType: var_tagType,
         title: var_title,
         durationMs: var_durationMs,
         artist: var_artist,
@@ -551,6 +560,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_mimeType = sse_decode_String(deserializer);
     var var_data = sse_decode_list_prim_u_8_strict(deserializer);
     return Picture(mimeType: var_mimeType, data: var_data);
+  }
+
+  @protected
+  TagType sse_decode_tag_type(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TagType.values[inner];
   }
 
   @protected
@@ -655,6 +671,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_metadata(Metadata self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_tag_type(self.tagType, serializer);
     sse_encode_opt_String(self.title, serializer);
     sse_encode_opt_box_autoadd_f_64(self.durationMs, serializer);
     sse_encode_opt_String(self.artist, serializer);
@@ -736,6 +753,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.mimeType, serializer);
     sse_encode_list_prim_u_8_strict(self.data, serializer);
+  }
+
+  @protected
+  void sse_encode_tag_type(TagType self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected

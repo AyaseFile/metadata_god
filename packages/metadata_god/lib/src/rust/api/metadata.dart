@@ -7,13 +7,12 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `get_or_create_tag_for_file`
-// These types are ignored because they are not used by any `pub` functions: `TagType`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `fmt`, `fmt`, `fmt`, `from`
 
 Future<Metadata> loftyReadMetadata({required String file}) =>
     RustLib.instance.api.crateApiMetadataLoftyReadMetadata(file: file);
 
-Future<void> loftyWriteMetadata(
+Future<TagType> loftyWriteMetadata(
         {required String file,
         required Metadata metadata,
         required bool createTagIfMissing}) =>
@@ -29,6 +28,7 @@ Future<void> id3WriteMetadata(
         .crateApiMetadataId3WriteMetadata(file: file, metadata: metadata);
 
 class Metadata {
+  final TagType tagType;
   final String? title;
   final double? durationMs;
   final String? artist;
@@ -44,6 +44,7 @@ class Metadata {
   final BigInt? fileSize;
 
   const Metadata({
+    required this.tagType,
     this.title,
     this.durationMs,
     this.artist,
@@ -61,6 +62,7 @@ class Metadata {
 
   @override
   int get hashCode =>
+      tagType.hashCode ^
       title.hashCode ^
       durationMs.hashCode ^
       artist.hashCode ^
@@ -80,6 +82,7 @@ class Metadata {
       identical(this, other) ||
       other is Metadata &&
           runtimeType == other.runtimeType &&
+          tagType == other.tagType &&
           title == other.title &&
           durationMs == other.durationMs &&
           artist == other.artist &&
@@ -117,4 +120,13 @@ class Picture {
           runtimeType == other.runtimeType &&
           mimeType == other.mimeType &&
           data == other.data;
+}
+
+enum TagType {
+  ape,
+  id3,
+  vorbis,
+  riff,
+  unknown,
+  ;
 }

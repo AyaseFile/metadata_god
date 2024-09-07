@@ -18,13 +18,29 @@ pub struct Picture {
 
 #[derive(Debug)]
 pub enum TagType {
+    Ape,
     Id3,
+    Vorbis,
     Riff,
     Unknown,
 }
 
+impl From<lofty::tag::TagType> for TagType {
+    fn from(lofty_tag_type: lofty::tag::TagType) -> Self {
+        match lofty_tag_type {
+            lofty::tag::TagType::Ape => TagType::Ape,
+            lofty::tag::TagType::Id3v1 => TagType::Id3,
+            lofty::tag::TagType::Id3v2 => TagType::Id3,
+            lofty::tag::TagType::VorbisComments => TagType::Vorbis,
+            lofty::tag::TagType::RiffInfo => TagType::Riff,
+            _ => TagType::Unknown,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Metadata {
+    pub tag_type: TagType,
     pub title: Option<String>,
     pub duration_ms: Option<f64>,
     pub artist: Option<String>,
@@ -57,6 +73,7 @@ pub fn lofty_read_metadata(file: String) -> Result<Metadata> {
         .get_picture_type(PictureType::CoverFront)
         .or(tag.pictures().first());
     Ok(Metadata {
+        tag_type: tag.tag_type().into(),
         title: tag.title().and_then(|s| Some(s.to_string())),
         duration_ms: Some(duration_ms),
         album: tag.album().and_then(|s| Some(s.to_string())),
@@ -84,7 +101,7 @@ pub fn lofty_read_metadata(file: String) -> Result<Metadata> {
     })
 }
 
-pub fn lofty_write_metadata(file: String, metadata: Metadata, create_tag_if_missing: bool) -> Result<()> {
+pub fn lofty_write_metadata(file: String, metadata: Metadata, create_tag_if_missing: bool) -> Result<TagType> {
     let mut tag = get_or_create_tag_for_file(&file, create_tag_if_missing)?;
 
     fn set_or_remove(tag: &mut LoftyTag, key: ItemKey, value: Option<String>) -> Result<()> {
@@ -133,7 +150,7 @@ pub fn lofty_write_metadata(file: String, metadata: Metadata, create_tag_if_miss
     }
 
     tag.save_to_path(&file, WriteOptions::default())?;
-    Ok(())
+    Ok(tag.tag_type().into())
 }
 
 fn get_or_create_tag_for_file(file: &str, create_if_missing: bool) -> Result<LoftyTag> {
@@ -170,6 +187,7 @@ pub fn id3_read_metadata(file: String) -> Result<Metadata> {
     let path = Path::new(&file);
     let tag = Id3Tag::read_from_path(path)?;
     let metadata = Metadata {
+        tag_type: TagType::Id3,
         title: tag.title().and_then(|s| Some(s.to_string())),
         duration_ms: tag.duration().map(|d| d as f64),
         album: tag.album().and_then(|s| Some(s.to_string())),

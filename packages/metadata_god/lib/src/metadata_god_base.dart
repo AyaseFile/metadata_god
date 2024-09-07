@@ -1,5 +1,5 @@
-import 'rust/frb_generated.dart' as frb;
 import 'rust/api/metadata.dart' as api_metadata;
+import 'rust/frb_generated.dart' as frb;
 
 abstract class MetadataGod {
   MetadataGod._();
@@ -60,7 +60,7 @@ abstract class MetadataGod {
   ///   createTagIfMissing: true,
   /// );
   /// ```
-  static Future<void> loftyWriteMetadata({
+  static Future<api_metadata.TagType> loftyWriteMetadata({
     required String file,
     required api_metadata.Metadata metadata,
     bool createTagIfMissing = true,
