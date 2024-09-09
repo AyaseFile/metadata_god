@@ -219,13 +219,6 @@ impl SseDecode for bool {
     }
 }
 
-impl SseDecode for f64 {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        deserializer.cursor.read_f64::<NativeEndian>().unwrap()
-    }
-}
-
 impl SseDecode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -250,7 +243,6 @@ impl SseDecode for crate::api::metadata::Metadata {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_tagType = <crate::api::metadata::TagType>::sse_decode(deserializer);
         let mut var_title = <Option<String>>::sse_decode(deserializer);
-        let mut var_durationMs = <Option<f64>>::sse_decode(deserializer);
         let mut var_artist = <Option<String>>::sse_decode(deserializer);
         let mut var_album = <Option<String>>::sse_decode(deserializer);
         let mut var_albumArtist = <Option<String>>::sse_decode(deserializer);
@@ -265,7 +257,6 @@ impl SseDecode for crate::api::metadata::Metadata {
         return crate::api::metadata::Metadata {
             tag_type: var_tagType,
             title: var_title,
-            duration_ms: var_durationMs,
             artist: var_artist,
             album: var_album,
             album_artist: var_albumArtist,
@@ -286,17 +277,6 @@ impl SseDecode for Option<String> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<String>::sse_decode(deserializer));
-        } else {
-            return None;
-        }
-    }
-}
-
-impl SseDecode for Option<f64> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        if (<bool>::sse_decode(deserializer)) {
-            return Some(<f64>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -441,7 +421,6 @@ impl flutter_rust_bridge::IntoDart for crate::api::metadata::Metadata {
         [
             self.tag_type.into_into_dart().into_dart(),
             self.title.into_into_dart().into_dart(),
-            self.duration_ms.into_into_dart().into_dart(),
             self.artist.into_into_dart().into_dart(),
             self.album.into_into_dart().into_dart(),
             self.album_artist.into_into_dart().into_dart(),
@@ -529,13 +508,6 @@ impl SseEncode for bool {
     }
 }
 
-impl SseEncode for f64 {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        serializer.cursor.write_f64::<NativeEndian>(self).unwrap();
-    }
-}
-
 impl SseEncode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -558,7 +530,6 @@ impl SseEncode for crate::api::metadata::Metadata {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <crate::api::metadata::TagType>::sse_encode(self.tag_type, serializer);
         <Option<String>>::sse_encode(self.title, serializer);
-        <Option<f64>>::sse_encode(self.duration_ms, serializer);
         <Option<String>>::sse_encode(self.artist, serializer);
         <Option<String>>::sse_encode(self.album, serializer);
         <Option<String>>::sse_encode(self.album_artist, serializer);
@@ -579,16 +550,6 @@ impl SseEncode for Option<String> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <String>::sse_encode(value, serializer);
-        }
-    }
-}
-
-impl SseEncode for Option<f64> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <bool>::sse_encode(self.is_some(), serializer);
-        if let Some(value) = self {
-            <f64>::sse_encode(value, serializer);
         }
     }
 }

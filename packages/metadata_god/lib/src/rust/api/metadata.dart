@@ -30,7 +30,6 @@ Future<void> id3WriteMetadata(
 class Metadata {
   final TagType tagType;
   final String? title;
-  final double? durationMs;
   final String? artist;
   final String? album;
   final String? albumArtist;
@@ -46,7 +45,6 @@ class Metadata {
   const Metadata({
     required this.tagType,
     this.title,
-    this.durationMs,
     this.artist,
     this.album,
     this.albumArtist,
@@ -64,7 +62,6 @@ class Metadata {
   int get hashCode =>
       tagType.hashCode ^
       title.hashCode ^
-      durationMs.hashCode ^
       artist.hashCode ^
       album.hashCode ^
       albumArtist.hashCode ^
@@ -84,7 +81,6 @@ class Metadata {
           runtimeType == other.runtimeType &&
           tagType == other.tagType &&
           title == other.title &&
-          durationMs == other.durationMs &&
           artist == other.artist &&
           album == other.album &&
           albumArtist == other.albumArtist &&

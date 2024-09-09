@@ -42,7 +42,6 @@ impl From<lofty::tag::TagType> for TagType {
 pub struct Metadata {
     pub tag_type: TagType,
     pub title: Option<String>,
-    pub duration_ms: Option<f64>,
     pub artist: Option<String>,
     pub album: Option<String>,
     pub album_artist: Option<String>,
@@ -58,7 +57,6 @@ pub struct Metadata {
 
 pub fn lofty_read_metadata(file: String) -> Result<Metadata> {
     let mut tagged_file = lofty::read_from_path(file)?;
-    let duration_ms = tagged_file.properties().duration().as_millis() as f64;
     let tag = match tagged_file.primary_tag_mut() {
         Some(primary_tag) => primary_tag,
         None => {
@@ -75,7 +73,6 @@ pub fn lofty_read_metadata(file: String) -> Result<Metadata> {
     Ok(Metadata {
         tag_type: tag.tag_type().into(),
         title: tag.title().and_then(|s| Some(s.to_string())),
-        duration_ms: Some(duration_ms),
         album: tag.album().and_then(|s| Some(s.to_string())),
         album_artist: tag
             .get(&ItemKey::AlbumArtist)
@@ -189,7 +186,6 @@ pub fn id3_read_metadata(file: String) -> Result<Metadata> {
     let metadata = Metadata {
         tag_type: TagType::Id3,
         title: tag.title().and_then(|s| Some(s.to_string())),
-        duration_ms: tag.duration().map(|d| d as f64),
         album: tag.album().and_then(|s| Some(s.to_string())),
         album_artist: tag.album_artist().and_then(|s| Some(s.to_string())),
         artist: tag.artist().and_then(|s| Some(s.to_string())),
