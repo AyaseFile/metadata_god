@@ -40,7 +40,6 @@ class Metadata {
   final int? year;
   final String? genre;
   final Picture? picture;
-  final BigInt? fileSize;
 
   const Metadata({
     required this.tagType,
@@ -55,7 +54,6 @@ class Metadata {
     this.year,
     this.genre,
     this.picture,
-    this.fileSize,
   });
 
   @override
@@ -71,8 +69,7 @@ class Metadata {
       discTotal.hashCode ^
       year.hashCode ^
       genre.hashCode ^
-      picture.hashCode ^
-      fileSize.hashCode;
+      picture.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -90,8 +87,7 @@ class Metadata {
           discTotal == other.discTotal &&
           year == other.year &&
           genre == other.genre &&
-          picture == other.picture &&
-          fileSize == other.fileSize;
+          picture == other.picture;
 }
 
 class Picture {

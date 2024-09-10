@@ -253,7 +253,6 @@ impl SseDecode for crate::api::metadata::Metadata {
         let mut var_year = <Option<i32>>::sse_decode(deserializer);
         let mut var_genre = <Option<String>>::sse_decode(deserializer);
         let mut var_picture = <Option<crate::api::metadata::Picture>>::sse_decode(deserializer);
-        let mut var_fileSize = <Option<u64>>::sse_decode(deserializer);
         return crate::api::metadata::Metadata {
             tag_type: var_tagType,
             title: var_title,
@@ -267,7 +266,6 @@ impl SseDecode for crate::api::metadata::Metadata {
             year: var_year,
             genre: var_genre,
             picture: var_picture,
-            file_size: var_fileSize,
         };
     }
 }
@@ -316,17 +314,6 @@ impl SseDecode for Option<u16> {
     }
 }
 
-impl SseDecode for Option<u64> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        if (<bool>::sse_decode(deserializer)) {
-            return Some(<u64>::sse_decode(deserializer));
-        } else {
-            return None;
-        }
-    }
-}
-
 impl SseDecode for crate::api::metadata::Picture {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -358,13 +345,6 @@ impl SseDecode for u16 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_u16::<NativeEndian>().unwrap()
-    }
-}
-
-impl SseDecode for u64 {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        deserializer.cursor.read_u64::<NativeEndian>().unwrap()
     }
 }
 
@@ -431,7 +411,6 @@ impl flutter_rust_bridge::IntoDart for crate::api::metadata::Metadata {
             self.year.into_into_dart().into_dart(),
             self.genre.into_into_dart().into_dart(),
             self.picture.into_into_dart().into_dart(),
-            self.file_size.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -540,7 +519,6 @@ impl SseEncode for crate::api::metadata::Metadata {
         <Option<i32>>::sse_encode(self.year, serializer);
         <Option<String>>::sse_encode(self.genre, serializer);
         <Option<crate::api::metadata::Picture>>::sse_encode(self.picture, serializer);
-        <Option<u64>>::sse_encode(self.file_size, serializer);
     }
 }
 
@@ -584,16 +562,6 @@ impl SseEncode for Option<u16> {
     }
 }
 
-impl SseEncode for Option<u64> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <bool>::sse_encode(self.is_some(), serializer);
-        if let Some(value) = self {
-            <u64>::sse_encode(value, serializer);
-        }
-    }
-}
-
 impl SseEncode for crate::api::metadata::Picture {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -625,13 +593,6 @@ impl SseEncode for u16 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_u16::<NativeEndian>(self).unwrap();
-    }
-}
-
-impl SseEncode for u64 {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        serializer.cursor.write_u64::<NativeEndian>(self).unwrap();
     }
 }
 

@@ -40,9 +40,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_u_16(dynamic raw);
 
   @protected
-  BigInt dco_decode_box_autoadd_u_64(dynamic raw);
-
-  @protected
   int dco_decode_i_32(dynamic raw);
 
   @protected
@@ -64,9 +61,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? dco_decode_opt_box_autoadd_u_16(dynamic raw);
 
   @protected
-  BigInt? dco_decode_opt_box_autoadd_u_64(dynamic raw);
-
-  @protected
   Picture dco_decode_picture(dynamic raw);
 
   @protected
@@ -74,9 +68,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int dco_decode_u_16(dynamic raw);
-
-  @protected
-  BigInt dco_decode_u_64(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -106,9 +97,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_box_autoadd_u_16(SseDeserializer deserializer);
 
   @protected
-  BigInt sse_decode_box_autoadd_u_64(SseDeserializer deserializer);
-
-  @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
@@ -130,9 +118,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? sse_decode_opt_box_autoadd_u_16(SseDeserializer deserializer);
 
   @protected
-  BigInt? sse_decode_opt_box_autoadd_u_64(SseDeserializer deserializer);
-
-  @protected
   Picture sse_decode_picture(SseDeserializer deserializer);
 
   @protected
@@ -140,9 +125,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_u_16(SseDeserializer deserializer);
-
-  @protected
-  BigInt sse_decode_u_64(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -173,9 +155,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_u_16(int self, SseSerializer serializer);
 
   @protected
-  void sse_encode_box_autoadd_u_64(BigInt self, SseSerializer serializer);
-
-  @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
@@ -199,9 +178,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_u_16(int? self, SseSerializer serializer);
 
   @protected
-  void sse_encode_opt_box_autoadd_u_64(BigInt? self, SseSerializer serializer);
-
-  @protected
   void sse_encode_picture(Picture self, SseSerializer serializer);
 
   @protected
@@ -209,9 +185,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_u_16(int self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);

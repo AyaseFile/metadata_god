@@ -52,7 +52,6 @@ pub struct Metadata {
     pub year: Option<i32>,
     pub genre: Option<String>,
     pub picture: Option<Picture>,
-    pub file_size: Option<u64>,
 }
 
 pub fn lofty_read_metadata(file: String) -> Result<Metadata> {
@@ -94,7 +93,6 @@ pub fn lofty_read_metadata(file: String) -> Result<Metadata> {
             }),
             None => None,
         }),
-        file_size: Some(21231_u64),
     })
 }
 
@@ -202,7 +200,6 @@ pub fn id3_read_metadata(file: String) -> Result<Metadata> {
                 mime_type: p.mime_type.clone(),
                 data: p.data.clone(),
             }),
-        file_size: Some(21231_u64),
     };
     Ok(metadata)
 }
